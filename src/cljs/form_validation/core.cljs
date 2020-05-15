@@ -15,23 +15,30 @@
 
 (defn form-input []
   (let [ string-value (reagent/atom {:name "name" :number "12345"})]
+(fn []
+
   [:div
    [:p "Name: "    [:input {:type "text"
                            :value (get @string-value :name)
-                           :on-change #(swap! string-value assoc :name(-> % .-target .-value))}]]
+                           :on-change #(swap! string-value assoc :name(-> % .-target .-value))}]
+
+    [:div "Your Name: " (get @string-value :name)] ]
 
     [:p "Number"    [:input {:type "text"
                         :value (get @string-value :number)
-                        :on-change #(swap! string-value assoc :number (-> % .-target .-value))}]]
-                     [:input {:type "submit" ,
+                        :on-change #(swap! string-value assoc :number (-> % .-target .-value))}]
+     [:div "Your Number: " (get @string-value :number)]]
+
+   [:input {:type "submit" ,
                             :value "Submit"
                             :on-click  #(do (reset!  my-name   (get @string-value :name))
-                                            (reset!  my-number  (get @string-value :number)) )}]] ))
+                                            (reset!  my-number  (get @string-value :number)) )}]] )))
 
-(defn validation [my-name my-number]
-    (fn []
-      (if (< 15 (count my-name) )  "valid"  "not-valid")
-      (if (< 11 (count my-number)) "valid" "not-valid")))
+(defn validation [my-name]
+    [:div  (and (< 5 (count my-name))
+                (> 15 (count my-name))  "valid" "not-valid")
+     ]
+      )
 
 
 (def router
@@ -52,7 +59,11 @@
     [:span.main
      [:h1 "Welcome to form-validation"]
     [form-input]
+     [:div
+      "changed name :-" @my-name
+      [:p "changed number :-" #(Integer/parseInt @my-number) ]]
 ]
+
     ))
 
 
