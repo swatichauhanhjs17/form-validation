@@ -39,7 +39,7 @@
 (defn validation [my-name my-number]
   (fn []  [:div
            [:p (if (> 5 (count my-name)) "valid" "not-valid" )]
-           [:p  (if (< 5 (count (edn/read-string my-number))) "valid" "not-valid" )]] )
+           [:p  (if (< 5 (edn/read-string my-number)) "valid" "not-valid" )]] )
 
 
   )
