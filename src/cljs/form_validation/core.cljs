@@ -5,7 +5,8 @@
    [reagent.session :as session]
    [reitit.frontend :as reitit]
    [clerk.core :as clerk]
-   [accountant.core :as accountant]))
+   [accountant.core :as accountant]
+   [clojure.edn :as edn]))
 
 ;; -------------------------
 ;; Routes
@@ -34,12 +35,14 @@
                             :on-click  #(do (reset!  my-name   (get @string-value :name))
                                             (reset!  my-number  (get @string-value :number)) )}]] )))
 
-(defn validation [my-name]
-    [:div  (and (< 5 (count my-name))
-                (> 15 (count my-name))  "valid" "not-valid")
-     ]
-      )
 
+(defn validation [my-name my-number]
+  (fn []  [:div
+           [:p (if (> 5 (count my-name)) "valid" "not-valid" )]
+           [:p  (if (< 5 (count (edn/read-string my-number))) "valid" "not-valid" )]] )
+
+
+  )
 
 (def router
   (reitit/router
@@ -61,7 +64,8 @@
     [form-input]
      [:div
       "changed name :-" @my-name
-      [:p "changed number :-" #(Integer/parseInt @my-number) ]]
+      [:p "changed number :-" (edn/read-string @my-number) ]
+      [validation @my-name @my-number]]
 ]
 
     ))
