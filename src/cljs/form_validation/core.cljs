@@ -14,35 +14,46 @@
 (def my-name (reagent/atom nil))
 (def my-number (reagent/atom nil))
 
-(defn form-input []
-  (let [ string-value (reagent/atom {:name "name" :number "12345"})]
-(fn []
+(defn name-validation [string-value]
+  [:div
+   [:p (if (and (< 5 (count (get @string-value :name)))
+            (> 15 (count (get @string-value :name))) )  #(reset! (get @string-value :bool-name true) )  #(reset! (get @string-value :bool-name false) )  )]
+   ]
+  )
 
+   (defn number-validation [string-value]
+     [:div
+   [:p (if (and (< 5  (edn/read-string (get @string-value :number) ))
+                (> 15 (edn/read-string (get @string-value :number) )) ) #(reset! (get @string-value :bool-number true) )  "not-valid1" )]
+
+      ]
+
+)
+
+
+(defn form-input []
+  (let [ string-value (reagent/atom {:name "name" :number "12345" :bool-name false :bool-number false})]
+(fn []
   [:div
    [:p "Name: "    [:input {:type "text"
                            :value (get @string-value :name)
                            :on-change #(swap! string-value assoc :name(-> % .-target .-value))}]
 
+
     [:div "Your Name: " (get @string-value :name)] ]
+   [:div [name-validation string-value]]
 
     [:p "Number"    [:input {:type "text"
                         :value (get @string-value :number)
                         :on-change #(swap! string-value assoc :number (-> % .-target .-value))}]
-     [:div "Your Number: " (get @string-value :number)]]
+          [:div "Your Number: " (get @string-value :number)]]
+   [:div [number-validation string-value]]
 
    [:input {:type "submit" ,
                             :value "Submit"
-                            :on-click  #(do (reset!  my-name   (get @string-value :name))
-                                            (reset!  my-number  (get @string-value :number)) )}]] )))
+                            :on-click  #(do (if (boolean? (get @string-value :bool-name)) (reset!  my-name (get @string-value :name)) " name invalid" )
+                                            (if (boolean? (get @string-value :bool-number)) (reset!  my-number  (get @string-value :number)) " number invalid" )  )}]] )))
 
-
-(defn validation [my-name my-number]
-  (fn []  [:div
-           [:p (if (> 5 (count my-name)) "valid" "not-valid" )]
-           [:p  (if (< 5 (edn/read-string my-number)) "valid" "not-valid" )]] )
-
-
-  )
 
 (def router
   (reitit/router
@@ -64,8 +75,9 @@
     [form-input]
      [:div
       "changed name :-" @my-name
-      [:p "changed number :-" (edn/read-string @my-number) ]
-      [validation @my-name @my-number]]
+      [:p "changed number :-" (edn/read-string @my-number)
+      ]
+      ]
 ]
 
     ))
