@@ -14,17 +14,17 @@
 (def my-name (reagent/atom nil))
 (def my-number (reagent/atom nil))
 
-(defn form-valid? [string-value]
+(defn form-valid? [form-value]
   [:div
-   [:p (if (and (< 5 (count (get @string-value :name)))
-                (> 15 (count (get @string-value :name))) ) true false )]
+   [:p (if (and (< 5 (count (get @form-value :name)))
+                (> 15 (count (get @form-value :name))) ) true false )]
    ]
   )
 
 (defn number-validation [string-value]
   [:div
    [:p (if (and (< 5  (edn/read-string (get @string-value :number) ))
-                (> 15 (edn/read-string (get @string-value :number) )) ) #(reset! (get @string-value :bool-number true) )  "not-valid1" )]
+                (> 15 (edn/read-string (get @string-value :number) )) )   "not-valid1" )]
 
    ]
 
@@ -40,18 +40,18 @@
                                 :value (get @form-value :name)
                                 :on-change #(swap! form-value assoc :name(-> % .-target .-value))}]
         ]
-       [:div [form-valid? form-value]]
+
 
        [:p "Number"    [:input {:type "text"
                                 :value (get @form-value :number)
                                 :on-change #(swap! form-value assoc :number (-> % .-target .-value))}]
         ]
-       [:div [form-valid? form-value] ]
+
 
        [:input {:type "submit" ,
                 :value "Submit"
-                :on-click  #(cond (form-valid? form-value) (do (reset!  my-name (get @form-value :name))(reset!  my-number (get @form-value :number)  )
-                                                                      ) :else (reset! error-message "error" ))
+                :on-click  #(if  (form-valid? form-value) (do (reset!  my-name (get @form-value :name))(reset!  my-number (get @form-value :number)  )
+                                                                      ) )
                 }] ] )))
 
 
