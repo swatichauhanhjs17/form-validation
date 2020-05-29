@@ -15,20 +15,14 @@
 (def my-number (reagent/atom nil))
 
 (defn form-valid? [form-value]
-  [:div
-   [:p (if (and (< 5 (count (get @form-value :name)))
-                (> 15 (count (get @form-value :name))) ) true false )]
-   ]
-  )
 
-(defn number-validation [string-value]
-  [:div
-   [:p (if (and (< 5  (edn/read-string (get @string-value :number) ))
-                (> 15 (edn/read-string (get @string-value :number) )) )   "not-valid1" )]
-
-   ]
+    (if (and (< 5 (count (get @form-value :name)))
+              (> 15 (count (get @form-value :name))))
+      (if (and (< 5  (edn/read-string (get @form-value :number) ))
+               (> 15 (edn/read-string (get @form-value :number) )) ) true false  ) false )
 
   )
+
 
 
 (defn form-input []
@@ -51,8 +45,10 @@
        [:input {:type "submit" ,
                 :value "Submit"
                 :on-click  #(if  (form-valid? form-value) (do (reset!  my-name (get @form-value :name))(reset!  my-number (get @form-value :number)  )
-                                                                      ) )
-                }] ] )))
+                                                              (reset! error-message "Your form is VERIFIED") )(reset! error-message "Your form has error")  )
+                }]
+       [:p "ERROR MESSAGE:- " @error-message]
+       ] )))
 
 
 (def router
