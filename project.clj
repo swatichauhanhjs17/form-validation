@@ -12,7 +12,7 @@
                  [ring/ring-defaults "0.3.2"]
                  [hiccup "1.0.5"]
                  [yogthos/config "1.1.7"]
-                 [org.clojure/clojurescript "1.10.741"
+                 [org.clojure/clojurescript "1.10.597"
                   :scope "provided"]
                  [metosin/reitit "0.4.2"]
                  [pez/clerk "1.0.0"]
@@ -87,7 +87,8 @@
                                   [ring/ring-devel "1.8.0"]
                                   [prone "2020-01-17"]
                                   [figwheel-sidecar "0.5.19"]
-                                  [nrepl "0.7.0"]
+
+                                  [nrepl "0.6.0"]
                                   [pjstadig/humane-test-output "0.10.0"]
                                   
  ]

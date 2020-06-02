@@ -13,39 +13,68 @@
 
 (def my-name (reagent/atom nil))
 (def my-number (reagent/atom nil))
+(def my-email (reagent/atom nil))
 
-(defn form-valid? [form-value]
 
-    (if (and (< 5 (count (get @form-value :name)))
-              (> 15 (count (get @form-value :name))))
-      (if (and (< 5  (edn/read-string (get @form-value :number) ))
-               (> 15 (edn/read-string (get @form-value :number) )) ) true false  ) false )
+(defn email-valid? [form-value]
+  (re-matches #"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"
+                   (get @form-value :email))
+  )
+
+(defn name-valid? [form-value]
+  (and (< 5 (count (get @form-value :name)))
+       (> 15 (count (get @form-value :name))))
 
   )
 
 
+(defn num-valid? [form-value]
+
+  (and (< 5  (edn/read-string (get @form-value :number) ))
+       (> 15 (edn/read-string (get @form-value :number) )) ) )
+
+
+
+(defn form-valid? [form-value]
+
+    (if (and (name-valid? form-value))
+      (if (num-valid? form-value)
+        (if (email-valid? form-value) true false ) false  ) false )
+
+  )
+
 
 (defn form-input []
-  (let [ form-value (reagent/atom {:name "name" :number "12345" })
+  (let [ form-value (reagent/atom {:name nil :number nil :email nil})
         error-message (reagent/atom nil)]
     (fn []
       [:div
        [:p "Name: "    [:input {:type "text"
                                 :value (get @form-value :name)
-                                :on-change #(swap! form-value assoc :name(-> % .-target .-value))}]
+                                :on-change #(swap! form-value assoc :name(-> % .-target .-value))
+                               }]
+
+
         ]
 
 
-       [:p "Number"    [:input {:type "text"
+       [:p "Number: "    [:input {:type "text"
                                 :value (get @form-value :number)
                                 :on-change #(swap! form-value assoc :number (-> % .-target .-value))}]
         ]
 
+       [:p "Email: "    [:input {:type "email"
+                                :value (get @form-value :email)
+                                :on-change #(swap! form-value assoc :email (-> % .-target .-value))}]
+        ]
 
        [:input {:type "submit" ,
                 :value "Submit"
-                :on-click  #(if  (form-valid? form-value) (do (reset!  my-name (get @form-value :name))(reset!  my-number (get @form-value :number)  )
-                                                              (reset! error-message "Your form is VERIFIED") )(reset! error-message "Your form has error")  )
+                :on-click  #(if  (form-valid? form-value) (do (reset!  my-name (get @form-value :name))
+                                                              (reset!  my-number (get @form-value :number))
+                                                              (reset!  my-email (get @form-value :email))
+                                                              (reset! error-message "Your form is VERIFIED")
+                                                              )(reset! error-message "Your form has error")  )
                 }]
        [:p "ERROR MESSAGE:- " @error-message]
        ] )))
@@ -71,9 +100,8 @@
      [form-input]
      [:div
       "changed name :-" @my-name
-      [:p "changed number :-" (edn/read-string @my-number)
-       ]
-
+      [:p "changed number :-" (edn/read-string @my-number)]
+      [:p "changed email :-"  @my-email]
       ]
      ]
 
