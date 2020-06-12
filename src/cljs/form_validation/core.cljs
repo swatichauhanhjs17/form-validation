@@ -16,9 +16,17 @@
 (def my-email (reagent/atom nil))
 
 
+
+
+(defn num-valid? [form-value]
+  (cond-> []   (> 5 (edn/read-string (get form-value :number)) ) (conj "too short")
+          (< 15 (edn/read-string (get form-value :number))) (conj  "too long")) )
+
+
+
 (defn email-valid? [form-value]
   (re-matches #"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"
-                   (get @form-value :email))
+              (get @form-value :email))
   )
 
 (defn name-valid? [form-value]
@@ -28,56 +36,43 @@
   )
 
 
-(defn num-valid? [form-value]
+;; (defn form-valid? [form-value]
+;;(if (and (name-valid? form-value))
+  ;;  (if (num-valid? form-value)
+;;  (if (email-valid? form-value) true false) false) false)
 
-  (and (< 5  (edn/read-string (get @form-value :number) ))
-       (> 15 (edn/read-string (get @form-value :number) )) ) )
-
-
-
-(defn form-valid? [form-value]
-
-    (if (and (name-valid? form-value))
-      (if (num-valid? form-value)
-        (if (email-valid? form-value) true false ) false  ) false )
-
-  )
+;; )
 
 
 (defn form-input []
-  (let [ form-value (reagent/atom {:name nil :number nil :email nil})
+  (let [form-value (reagent/atom {:name nil :number nil :email nil})
         error-message (reagent/atom nil)]
     (fn []
       [:div
-       [:p "Name: "    [:input {:type "text"
-                                :value (get @form-value :name)
-                                :on-change #(swap! form-value assoc :name(-> % .-target .-value))
-                               }]
-
+       [:p "Name: " [:input {:type      "text"
+                             :value     (get @form-value :name)
+                             :on-change #(swap! form-value assoc :name (-> % .-target .-value))
+                             }]
 
         ]
 
 
-       [:p "Number: "    [:input {:type "text"
-                                :value (get @form-value :number)
-                                :on-change #(swap! form-value assoc :number (-> % .-target .-value))}]
+       [:p "Number: " [:input {:type      "text"
+                               :value     (get @form-value :number)
+                               :on-change #(swap! form-value assoc :number (-> % .-target .-value))}]
         ]
 
-       [:p "Email: "    [:input {:type "email"
-                                :value (get @form-value :email)
-                                :on-change #(swap! form-value assoc :email (-> % .-target .-value))}]
+       [:p "Email: " [:input {:type      "email"
+                              :value     (get @form-value :email)
+                              :on-change #(swap! form-value assoc :email (-> % .-target .-value))}]
         ]
 
-       [:input {:type "submit" ,
-                :value "Submit"
-                :on-click  #(if  (form-valid? form-value) (do (reset!  my-name (get @form-value :name))
-                                                              (reset!  my-number (get @form-value :number))
-                                                              (reset!  my-email (get @form-value :email))
-                                                              (reset! error-message "Your form is VERIFIED")
-                                                              )(reset! error-message "Your form has error")  )
+       [:input {:type     "submit",
+                :value    "Submit"
+                :on-click #(reset! error-message (num-valid? form-value) )
                 }]
        [:p "ERROR MESSAGE:- " @error-message]
-       ] )))
+       ])))
 
 
 (def router
@@ -101,7 +96,7 @@
      [:div
       "changed name :-" @my-name
       [:p "changed number :-" (edn/read-string @my-number)]
-      [:p "changed email :-"  @my-email]
+      [:p "changed email :-" @my-email]
       ]
      ]
 
@@ -145,7 +140,7 @@
     {:nav-handler
      (fn [path]
        (let [match (reitit/match-by-path router path)
-             current-page (:name (:data  match))
+             current-page (:name (:data match))
              route-params (:path-params match)]
          (reagent/after-render clerk/after-render!)
          (session/put! :route {:current-page (page-for current-page)
