@@ -39,8 +39,8 @@
 
 
 (defn form-valid? [form-value]
- {:number (num-valid? @form-value)
-  :name (name-valid? @form-value)}
+ {:number (num-valid? form-value)
+  :name (name-valid? form-value)}
 
   )
 
