@@ -20,28 +20,40 @@
 
 
 (defn num-valid? [form-value]
-(cond-> [] (> 5 (edn/read-string (get form-value :number))) (conj "too short")
-      (< 15 (edn/read-string (get form-value :number))) (conj "too long")) )
+(cond-> []
+        (> 5 (edn/read-string (get form-value :number))) (conj :number "too short")
+        (< 15 (edn/read-string (get form-value :number))) (conj :number"too long")
+        (and (<= 5 (edn/read-string (get form-value :number)) )
+             (>= 15  (edn/read-string (get form-value :number))) ) (conj :number "valid")
+        )
+
+  )
 
 
 
-;;(defn email-valid? [form-value]
-;;  (re-matches #"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"
-;;            (get @form-value :email))
-;; )
+(defn email-valid? [form-value]
+ (cond-> []
+       (re-matches #"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"
+                   (get form-value :email)) (conj :email "Valid")
+       )
+ )
 
  (defn name-valid? [form-value]
    (cond-> []
            (> 5 (count (get form-value :name))) (conj :name "too short")
            (< 15 (count (get form-value :name))) (conj :name "too long")
-           ) )
+           (and (<= 5 (count (get form-value :name)))
+                (>= 15 (count (get form-value :name))))  (conj :name "valid"))
+
+           )
 
 
 
 (defn form-valid? [form-value]
  {:number (num-valid? form-value)
-  :name (name-valid? form-value)}
-
+  :name (name-valid? form-value)
+  :email (email-valid? form-value)
+  }
   )
 
 
@@ -55,18 +67,20 @@
                              :value     (get @form-value :name)
                              :on-change #(swap! form-value assoc :name (-> % .-target .-value))
                              }]
-
+        [:p (str (get @error-message :name))]
         ]
 
 
        [:p "Number: " [:input {:type      "text"
                                :value     (get @form-value :number)
                                :on-change #(swap! form-value assoc :number (-> % .-target .-value))}]
+        [:p (str (get @error-message :number))]
         ]
 
        [:p "Email: " [:input {:type      "email"
                               :value     (get @form-value :email)
                               :on-change #(swap! form-value assoc :email (-> % .-target .-value))}]
+        [:p (str (get @error-message :email))]
         ]
 
        [:input {:type     "submit",
