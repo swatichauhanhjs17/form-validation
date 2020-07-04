@@ -21,6 +21,10 @@
 
 (defn num-valid? [form-value]
 (cond-> []
+        ;; (string? (edn/read-string (get form-value :number)) ) (conj :number"only numbers allowed")
+        ;;the above line of code doesn't work
+          (re-find #"[a-z!#$%&'*+/=?^_`{|}~-]"  (get form-value :number)) (conj :number"only numbers allowed")
+        ;; if no. are written before the characters it doesn't work
         (> 5 (edn/read-string (get form-value :number))) (conj :number "too short")
         (< 15 (edn/read-string (get form-value :number))) (conj :number"too long")
         (and (<= 5 (edn/read-string (get form-value :number)) )
@@ -33,13 +37,17 @@
 
 (defn email-valid? [form-value]
  (cond-> []
-       (re-matches #"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"
-                   (get form-value :email)) (conj :email "Valid")
+         (re-matches #"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"
+                     (get form-value :email)) (conj :email "Valid")
+         (not (re-matches #"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"
+                      (get form-value :email)) )   (conj :email "Invalid")
        )
  )
 
  (defn name-valid? [form-value]
    (cond-> []
+           (int?  (get form-value :name) ) (conj :name "number")
+           ;; the above line of code doesn't work and if i enter no. it just shows "too short"
            (> 5 (count (get form-value :name))) (conj :name "too short")
            (< 15 (count (get form-value :name))) (conj :name "too long")
            (and (<= 5 (count (get form-value :name)))
