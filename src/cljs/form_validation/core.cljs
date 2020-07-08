@@ -6,7 +6,10 @@
     [reitit.frontend :as reitit]
     [clerk.core :as clerk]
     [accountant.core :as accountant]
-    [clojure.edn :as edn]))
+    [clojure.edn :as edn]
+    ;; [clj-time.core :as t]
+
+    ))
 
 ;; -------------------------
 ;; Routes
@@ -20,54 +23,58 @@
 
 
 (defn num-valid? [form-value]
-(cond-> []
-        ;; (string? (edn/read-string (get form-value :number)) ) (conj :number"only numbers allowed")
-        ;;the above line of code doesn't work
-          (re-find #"[a-z!#$%&'*+/=?^_`{|}~-]"  (get form-value :number)) (conj :number"only numbers allowed")
-        ;; if no. are written before the characters it doesn't work
-        (> 5 (edn/read-string (get form-value :number))) (conj :number "too short")
-        (< 15 (edn/read-string (get form-value :number))) (conj :number"too long")
-        (and (<= 5 (edn/read-string (get form-value :number)) )
-             (>= 15  (edn/read-string (get form-value :number))) ) (conj :number "valid")
-        )
-
+  (if (re-find #"[^\d+$]" (get form-value :number))
+    (cond-> []
+            (> 5 (edn/read-string (get form-value :number))) (conj :number "too short")
+            (< 15 (edn/read-string (get form-value :number))) (conj :number "too long")
+            (and (<= 5 (edn/read-string (get form-value :number)))
+                 (>= 15 (edn/read-string (get form-value :number)))) (conj :number "valid"))
+    ["only numbers allowed"] )
   )
+
 
 
 
 (defn email-valid? [form-value]
- (cond-> []
-         (re-matches #"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"
-                     (get form-value :email)) (conj :email "Valid")
-         (not (re-matches #"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"
-                      (get form-value :email)) )   (conj :email "Invalid")
-       )
- )
+  (cond-> []
+          (re-matches #"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"
+                      (get form-value :email)) (conj :email "Valid")
+          (not (re-matches #"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"
+                           (get form-value :email))) (conj :email "Invalid")
+          )
+  )
 
- (defn name-valid? [form-value]
-   (cond-> []
-           (int?  (get form-value :name) ) (conj :name "number")
-           ;; the above line of code doesn't work and if i enter no. it just shows "too short"
-           (> 5 (count (get form-value :name))) (conj :name "too short")
-           (< 15 (count (get form-value :name))) (conj :name "too long")
-           (and (<= 5 (count (get form-value :name)))
-                (>= 15 (count (get form-value :name))))  (conj :name "valid"))
+(defn name-valid? [form-value]
+  (if (not (re-find #"[^\d+$]" (get form-value :name)))
+    (cond-> []
+            (> 5 (count (get form-value :name))) (conj :name "too short")
+            (< 15 (count (get form-value :name))) (conj :name "too long")
+            (and (<= 5 (count (get form-value :name)))
+                 (>= 15 (count (get form-value :name)))) (conj :name "valid"))
+   ["only characters allowed"]  )
 
-           )
-
-
-
-(defn form-valid? [form-value]
- {:number (num-valid? form-value)
-  :name (name-valid? form-value)
-  :email (email-valid? form-value)
-  }
   )
 
 
 
+(defn form-valid? [form-value]
+  {:number (num-valid? form-value)
+   :name   (name-valid? form-value)
+   :email  (email-valid? form-value)
+   }
+  )
+
+(defn show-errors
+  [error-message]
+  [:div
+    (for [item error-message]
+      ^{:key (str item)} [ item]
+      )])
+
+
+
 (defn form-input []
-  (let [form-value (reagent/atom {:name nil :number nil :email nil})
+  (let [form-value (reagent/atom {:name nil :number nil :email nil :date1 nil})
         error-message (reagent/atom {})]
     (fn []
       [:div
@@ -75,27 +82,32 @@
                              :value     (get @form-value :name)
                              :on-change #(swap! form-value assoc :name (-> % .-target .-value))
                              }]
-        [:p (str (get @error-message :name))]
+        [show-errors (get @error-message :name)]
         ]
 
 
        [:p "Number: " [:input {:type      "text"
                                :value     (get @form-value :number)
                                :on-change #(swap! form-value assoc :number (-> % .-target .-value))}]
-        [:p (str (get @error-message :number))]
+        [show-errors (get @error-message :number)]
         ]
 
        [:p "Email: " [:input {:type      "email"
                               :value     (get @form-value :email)
                               :on-change #(swap! form-value assoc :email (-> % .-target .-value))}]
-        [:p (str (get @error-message :email))]
+        [show-errors (get @error-message :email)]
         ]
+
+       [:p "Date: " [:input {:type      "date"
+                             :value     (get @form-value :date1)
+                             :on-change #(swap! form-value assoc :date1 (-> % .-target .-value))
+                             }]]
 
        [:input {:type     "submit",
                 :value    "Submit"
-                :on-click #(reset! error-message (form-valid? @form-value) )
+                :on-click #(reset! error-message (form-valid? @form-value))
                 }]
-       [:p "ERROR MESSAGE:- " (str @error-message)  ]
+       [:p "ERROR MESSAGE:- " (str @error-message)]
        ])))
 
 
