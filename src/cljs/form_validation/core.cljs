@@ -24,12 +24,13 @@
 
 (defn num-valid? [form-value]
   (if (re-find #"[^\d+$]" (get form-value :number))
+    ["only numbers allowed"]
     (cond-> []
             (> 5 (edn/read-string (get form-value :number))) (conj :number "too short")
             (< 15 (edn/read-string (get form-value :number))) (conj :number "too long")
             (and (<= 5 (edn/read-string (get form-value :number)))
                  (>= 15 (edn/read-string (get form-value :number)))) (conj :number "valid"))
-    ["only numbers allowed"] )
+    )
   )
 
 
@@ -46,12 +47,13 @@
 
 (defn name-valid? [form-value]
   (if (not (re-find #"[^\d+$]" (get form-value :name)))
+    ["only characters allowed"]
     (cond-> []
-            (> 5 (count (get form-value :name))) (conj :name "too short")
-            (< 15 (count (get form-value :name))) (conj :name "too long")
+            (> 5 (count (get form-value :name))) (conj :name " too short")
+            (< 15 (count (get form-value :name))) (conj :name " too long")
             (and (<= 5 (count (get form-value :name)))
-                 (>= 15 (count (get form-value :name)))) (conj :name "valid"))
-   ["only characters allowed"]  )
+                 (>= 15 (count (get form-value :name)))) (conj :name " valid"))
+   )
 
   )
 
@@ -64,14 +66,28 @@
    }
   )
 
-(defn show-errors
+(defn show-name-errors
   [error-message]
   [:div
     (for [item error-message]
-      ^{:key (str item)} [ item]
+       item
       )])
 
 
+(defn show-num-errors
+  [num-error]
+  [:div
+   (for [item num-error]
+     ^{:key (str item)} item)
+   ])
+
+(defn show-email-error
+  [email-error]
+  [:div
+   (for [item email-error]
+     item )
+   ]
+)
 
 (defn form-input []
   (let [form-value (reagent/atom {:name nil :number nil :email nil :date1 nil})
@@ -82,20 +98,20 @@
                              :value     (get @form-value :name)
                              :on-change #(swap! form-value assoc :name (-> % .-target .-value))
                              }]
-        [show-errors (get @error-message :name)]
+        [show-name-errors (get @error-message :name)]
         ]
 
 
        [:p "Number: " [:input {:type      "text"
                                :value     (get @form-value :number)
                                :on-change #(swap! form-value assoc :number (-> % .-target .-value))}]
-        [show-errors (get @error-message :number)]
+        [show-num-errors (get @error-message :number)]
         ]
 
        [:p "Email: " [:input {:type      "email"
                               :value     (get @form-value :email)
                               :on-change #(swap! form-value assoc :email (-> % .-target .-value))}]
-        [show-errors (get @error-message :email)]
+        [show-email-error (get @error-message :email)]
         ]
 
        [:p "Date: " [:input {:type      "date"
