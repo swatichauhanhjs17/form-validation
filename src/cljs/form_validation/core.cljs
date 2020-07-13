@@ -23,14 +23,12 @@
 
 
 (defn num-valid? [form-value]
-  (if (re-find #"[^\d+$]" (get form-value :number))
-    ["only numbers allowed"]
-    (cond-> []
-            (> 5 (edn/read-string (get form-value :number))) (conj :number "too short")
-            (< 15 (edn/read-string (get form-value :number))) (conj :number "too long")
+  (if (re-find #"^\d+$" (get form-value :number))
+    (cond-> [] (> 5 (edn/read-string (get form-value :number))) (conj  "too short")
+            (< 15 (edn/read-string (get form-value :number))) (conj  "too long")
             (and (<= 5 (edn/read-string (get form-value :number)))
-                 (>= 15 (edn/read-string (get form-value :number)))) (conj :number "valid"))
-    )
+                 (>= 15 (edn/read-string (get form-value :number)))) (conj "no error"))
+    ["only numbers allowed"])
   )
 
 
@@ -39,21 +37,22 @@
 (defn email-valid? [form-value]
   (cond-> []
           (re-matches #"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"
-                      (get form-value :email)) (conj :email "Valid")
+                      (get form-value :email)) (conj  "no errors")
           (not (re-matches #"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"
-                           (get form-value :email))) (conj :email "Invalid")
+                           (get form-value :email))) (conj  "Invalid")
           )
   )
 
 (defn name-valid? [form-value]
-  (if (not (re-find #"[^\d+$]" (get form-value :name)))
-    ["only characters allowed"]
+  (if (re-find #"^[A-Za-z]+$"  (get form-value :name))
+
     (cond-> []
-            (> 5 (count (get form-value :name))) (conj :name " too short")
-            (< 15 (count (get form-value :name))) (conj :name " too long")
+            (> 5 (count (get form-value :name))) (conj " too short")
+            (< 15 (count (get form-value :name))) (conj  " too long")
             (and (<= 5 (count (get form-value :name)))
-                 (>= 15 (count (get form-value :name)))) (conj :name " valid"))
-   )
+                 (>= 15 (count (get form-value :name)))) (conj  " valid"))
+
+    ["only characters allowed"])
 
   )
 
@@ -69,7 +68,7 @@
 (defn show-name-errors
   [error-message]
   [:div
-    (for [item error-message]
+    (for [item  error-message]
        item
       )])
 
@@ -84,8 +83,10 @@
 (defn show-email-error
   [email-error]
   [:div
-   (for [item email-error]
-     item )
+   [:ul
+    (for [item email-error]
+      [:li  item ])]
+
    ]
 )
 
@@ -111,7 +112,8 @@
        [:p "Email: " [:input {:type      "email"
                               :value     (get @form-value :email)
                               :on-change #(swap! form-value assoc :email (-> % .-target .-value))}]
-        [show-email-error (get @error-message :email)]
+        (if (= "no errors" [show-email-error (get @error-message :email)])
+              (reset! my-email (get @error-message :email)))
         ]
 
        [:p "Date: " [:input {:type      "date"
