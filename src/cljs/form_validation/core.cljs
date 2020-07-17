@@ -37,9 +37,9 @@
 (defn email-valid? [form-value]
   (cond-> []
           (re-matches #"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"
-                      (get form-value :email)) (conj  "no errors")
+                      (get form-value :email)) (conj nil)
           (not (re-matches #"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"
-                           (get form-value :email))) (conj  "Invalid")
+                           (get form-value :email))) (conj "Invalid" )
           )
   )
 
@@ -50,7 +50,7 @@
             (> 5 (count (get form-value :name))) (conj " too short")
             (< 15 (count (get form-value :name))) (conj  " too long")
             (and (<= 5 (count (get form-value :name)))
-                 (>= 15 (count (get form-value :name)))) (conj  " valid"))
+                 (>= 15 (count (get form-value :name)))) (conj []))
 
     ["only characters allowed"])
 
@@ -83,11 +83,10 @@
 (defn show-email-error
   [email-error]
   [:div
-   [:ul
     (for [item email-error]
-      [:li  item ])]
+      item )]
 
-   ]
+
 )
 
 (defn form-input []
@@ -107,15 +106,18 @@
                                :value     (get @form-value :number)
                                :on-change #(swap! form-value assoc :number (-> % .-target .-value))}]
         [show-num-errors (get @error-message :number)]
+        (if (nil? (get @error-message :name))
+          (reset! my-name(get @error-message :name)))
         ]
+
 
        [:p "Email: " [:input {:type      "email"
                               :value     (get @form-value :email)
                               :on-change #(swap! form-value assoc :email (-> % .-target .-value))}]
-        (if (= "no errors" [show-email-error (get @error-message :email)])
-              (reset! my-email (get @error-message :email)))
+        [show-email-error (get @error-message :email)]
+       (if (empty? (get @error-message :email))
+          (reset! my-email (get @error-message :email)))
         ]
-
        [:p "Date: " [:input {:type      "date"
                              :value     (get @form-value :date1)
                              :on-change #(swap! form-value assoc :date1 (-> % .-target .-value))
