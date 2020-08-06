@@ -18,52 +18,32 @@
 (def my-name (reagent/atom nil))
 (def my-number (reagent/atom nil))
 (def my-email (reagent/atom nil))
-
+(def error-message (reagent/atom {}))
 
 
 
 (defn num-valid? [form-value]
   (if (re-find #"^\d+$" (get form-value :number))
     (cond-> [] (> 5 (edn/read-string (get form-value :number))) (conj  "too short")
-            (< 15 (edn/read-string (get form-value :number))) (conj  "too long")
-            (and (<= 5 (edn/read-string (get form-value :number)))
-                 (>= 15 (edn/read-string (get form-value :number)))) (conj "no error"))
-    ["only numbers allowed"])
-  )
+            (< 15 (edn/read-string (get form-value :number))) (conj  "too long"))
+    ["only numbers allowed"]))
 
 
 
 
 (defn email-valid? [form-value]
   (cond-> []
-          (re-matches #"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"
-                      (get form-value :email)) (conj nil)
           (not (re-matches #"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"
-                           (get form-value :email))) (conj "Invalid" )
-          )
-  )
+                           (get form-value :email))) (conj "Invalid" )))
 
 (defn name-valid? [form-value]
   (if (re-find #"^[A-Za-z]+$"  (get form-value :name))
 
     (cond-> []
             (> 5 (count (get form-value :name))) (conj " too short")
-            (< 15 (count (get form-value :name))) (conj  " too long")
-            (and (<= 5 (count (get form-value :name)))
-                 (>= 15 (count (get form-value :name)))) (conj []))
+            (< 15 (count (get form-value :name))) (conj  " too long"))
+    ["only characters allowed"]))
 
-    ["only characters allowed"])
-
-  )
-
-
-
-(defn form-valid? [form-value]
-  {:number (num-valid? form-value)
-   :name   (name-valid? form-value)
-   :email  (email-valid? form-value)
-   }
-  )
 
 (defn show-name-errors
   [error-message]
@@ -89,9 +69,18 @@
 
 )
 
+(defn form-valid? [form-value]
+  {:number (num-valid? form-value)
+   :name   (name-valid? form-value)
+   :email  (email-valid? form-value)
+   }
+  )
+
+
+
 (defn form-input []
   (let [form-value (reagent/atom {:name nil :number nil :email nil :date1 nil})
-        error-message (reagent/atom {})]
+       ]
     (fn []
       [:div
        [:p "Name: " [:input {:type      "text"
@@ -106,8 +95,7 @@
                                :value     (get @form-value :number)
                                :on-change #(swap! form-value assoc :number (-> % .-target .-value))}]
         [show-num-errors (get @error-message :number)]
-        (if (nil? (get @error-message :name))
-          (reset! my-name(get @error-message :name)))
+
         ]
 
 
@@ -115,8 +103,7 @@
                               :value     (get @form-value :email)
                               :on-change #(swap! form-value assoc :email (-> % .-target .-value))}]
         [show-email-error (get @error-message :email)]
-       (if (empty? (get @error-message :email))
-          (reset! my-email (get @error-message :email)))
+
         ]
        [:p "Date: " [:input {:type      "date"
                              :value     (get @form-value :date1)
@@ -125,7 +112,13 @@
 
        [:input {:type     "submit",
                 :value    "Submit"
-                :on-click #(reset! error-message (form-valid? @form-value))
+                :on-click #(do (form-valid? @form-value)
+                               (if (empty? (get @form-valid? :number))
+                                 (if (empty? ( get @form-valid? :name))
+                                   (if (empty? ( get @form-valid? :email)) ))
+                                 (reset! @my-email (get @form-value :email) ))
+                               (reset! error-message (form-valid? @form-value)) )
+
                 }]
        [:p "ERROR MESSAGE:- " (str @error-message)]
        ])))
