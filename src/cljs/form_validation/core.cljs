@@ -34,7 +34,8 @@
 (defn email-valid? [form-value]
   (cond-> []
           (not (re-matches #"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"
-                           (get form-value :email))) (conj "Invalid" )))
+           (get form-value :email))) (conj "Invalid" )))
+
 
 (defn name-valid? [form-value]
   (if (re-find #"^[A-Za-z]+$"  (get form-value :name))
@@ -43,6 +44,7 @@
             (> 5 (count (get form-value :name))) (conj " too short")
             (< 15 (count (get form-value :name))) (conj  " too long"))
     ["only characters allowed"]))
+
 
 
 (defn show-name-errors
@@ -65,18 +67,32 @@
   [:div
     (for [item email-error]
       item )]
+  )
 
-
-)
-
-(defn form-valid? [form-value]
+(defn get-form-errors [form-value]
   {:number (num-valid? form-value)
    :name   (name-valid? form-value)
    :email  (email-valid? form-value)
    }
   )
 
+(defn form-valid? [form-value]
+  (get-form-errors form-value)
+    (if (empty? (get get-form-errors :number))
+    (if (empty? ( get get-form-errors :name))
+      (if (empty? ( get get-form-errors :email))))
+  true false)
+  )
 
+(defn submit-form! [form-value]
+  (do  (reset! my-name (get @form-value :name)  )
+       (reset! my-number (get @form-value :number))
+       (reset! my-email (get @form-value :email)) )
+ )
+
+(defn set-errors!
+  [form-value]
+  (reset! error-message  (get-form-errors  form-value )))
 
 (defn form-input []
   (let [form-value (reagent/atom {:name nil :number nil :email nil :date1 nil})
@@ -112,12 +128,10 @@
 
        [:input {:type     "submit",
                 :value    "Submit"
-                :on-click #(do (form-valid? @form-value)
-                               (if (empty? (get @form-valid? :number))
-                                 (if (empty? ( get @form-valid? :name))
-                                   (if (empty? ( get @form-valid? :email)) ))
-                                 (reset! @my-email (get @form-value :email) ))
-                               (reset! error-message (form-valid? @form-value)) )
+                :on-click #(if (form-valid? @form-value)
+                                 (submit-form! @form-value)
+                                 (set-errors! @form-value)
+                                 )
 
                 }]
        [:p "ERROR MESSAGE:- " (str @error-message)]
